@@ -1,3 +1,5 @@
+# Basado en v6_5d, integracion del OCR avanzado del footer (deteccion robusta de labels y coordenadas)
+
 import argparse, os, re, time, json, pandas as pd, xml.etree.ElementTree as ET
 from pathlib import Path
 from pywinauto.application import Application
@@ -405,7 +407,7 @@ def main():
         print("[DEBUG] Clic en la caja de MESH")
         time.sleep(1.0)  # Espera a que se abra el desplegable
 
-        # Usar la misma región que el dropdown de camaras para el OCR de Mesh
+        # Usar la misma región que el dropdown de cámaras para el OCR de Mesh
         screen_w, screen_h = pyautogui.size()
         footer_bottom = int(footer_top + footer_h)
         taskbar_height = screen_h - footer_bottom
@@ -459,52 +461,6 @@ def main():
     # CACHE GLOBAL para estaciones (mantener optimización)
     station_dropdown_boxes = None
     
-        # --- Mapeo de fila Excel <-> NR para escritura robusta ---
-    excel_path = cfg["excel_path"]
-    # Comprobar si el archivo está abierto (por lock)
-    excel_open = False
-    try:
-        with open(excel_path, "a"):
-            pass
-    except PermissionError:
-        excel_open = True
-    
-    if excel_open:
-        now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-        excel_copy = excel_path.replace(".xlsx", f"_copia_{now_str}.xlsx")
-        shutil.copy2(excel_path, excel_copy)
-        print(f"[INFO] El archivo Excel original esta ABIERTO. Se ha creado una copia: {excel_copy} y se escribira en esa copia.")
-        target_excel = excel_copy
-    else:
-        target_excel = excel_path
-    
-    # Leer SOLO UNA VEZ los valores de NR y la fila real
-    wb_map = openpyxl.load_workbook(target_excel, data_only=True)
-    sheet_name = cfg.get("excel_sheet", "Hoja1")
-    ws_map = wb_map[sheet_name]
-    header_row = hdr + 1  # hdr viene de load_excel_any_header, openpyxl es 1-based
-    
-    # Buscar la columna NR
-    col_nr_excel = None
-    for col in range(1, ws_map.max_column + 1):
-        cell_val = ws_map.cell(row=header_row, column=col).value
-        if cell_val and str(cell_val).strip().upper() in ["NR", "NR.", "NUMERO", "NUMBER"]:
-            col_nr_excel = col
-            break
-    if not col_nr_excel:
-        print(f"[ERROR] No se encontró la columna NR en la hoja {sheet_name}. No se escribirá nada en el Excel.")
-        wb_map.close()
-        nr_to_row = {}
-    else:
-        # Mapeo NR -> fila
-        nr_to_row = {}
-        for rowi in range(header_row + 1, ws_map.max_row + 1):
-            nr_val = ws_map.cell(row=rowi, column=col_nr_excel).value
-            if nr_val is not None:
-                nr_to_row[str(nr_val).strip()] = rowi
-        print(f"[DEBUG] Mapeo NR->fila: {nr_to_row}")
-        wb_map.close()
-
     for idx, row in df.iterrows():
         try:
             # Conversión segura de valores
@@ -1100,46 +1056,74 @@ def main():
                 for row_print in intersect_table:
                     print(" ".join(row_print))
 
-            
-            # ESCRITURA DE COORDENADAS X, Y, Z EN EXCEL COMO NÚMERO (dentro del bucle)
+            # --- Mapeo de fila Excel <-> NR para escritura robusta ---
+            excel_path = cfg["excel_path"]
+            # Comprobar si el archivo está abierto (por lock)
+            excel_open = False
+            try:
+                with open(excel_path, "a"):
+                    pass
+            except PermissionError:
+                excel_open = True
+
+            if excel_open:
+                now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                excel_copy = excel_path.replace(".xlsx", f"_copia_{now_str}.xlsx")
+                shutil.copy2(excel_path, excel_copy)
+                print(f"[INFO] El archivo Excel original está ABIERTO. Se ha creado una copia: {excel_copy} y se escribirá en esa copia.")
+                target_excel = excel_copy
+            else:
+                target_excel = excel_path
+
+            # Leer SOLO UNA VEZ los valores de NR y la fila real
+            wb_map = openpyxl.load_workbook(target_excel, data_only=True)
+            sheet_name = cfg.get("excel_sheet", "Hoja1")
+            ws_map = wb_map[sheet_name]
+            header_row = hdr + 1  # hdr viene de load_excel_any_header, openpyxl es 1-based
+
+            # Buscar la columna NR
+            col_nr_excel = None
+            for col in range(1, ws_map.max_column + 1):
+                cell_val = ws_map.cell(row=header_row, column=col).value
+                if cell_val and str(cell_val).strip().upper() in ["NR", "NR.", "NUMERO", "NUMBER"]:
+                    col_nr_excel = col
+                    break
+            if not col_nr_excel:
+                print(f"[ERROR] No se encontró la columna NR en la hoja {sheet_name}. No se escribirá nada en el Excel.")
+                wb_map.close()
+                nr_to_row = {}
+            else:
+                # Mapeo NR -> fila
+                nr_to_row = {}
+                for rowi in range(header_row + 1, ws_map.max_row + 1):
+                    nr_val = ws_map.cell(row=rowi, column=col_nr_excel).value
+                    if nr_val is not None:
+                        nr_to_row[str(nr_val).strip()] = rowi
+                print(f"[DEBUG] Mapeo NR->fila: {nr_to_row}")
+                wb_map.close()
+
+            # ESCRITURA DEBUG EN EXCEL (dentro del bucle)
             try:
                 wb_write = openpyxl.load_workbook(target_excel)
                 ws_write = wb_write[sheet_name]
                 header_row = hdr + 1  # hdr viene de load_excel_any_header, openpyxl es 1-based
 
-                # Buscar las columnas X_NEW, Y_NEW, Z_NEW (no crear si no existen)
-                col_xnew = col_ynew = col_znew = None
+                # Buscar la columna X_NEW (no crear si no existe)
+                col_xnew = None
                 for col in range(1, ws_write.max_column + 1):
                     cell_val = ws_write.cell(row=header_row, column=col).value
-                    if cell_val:
-                        col_name = str(cell_val).strip().upper()
-                        if col_name == "X_NEW":
-                            col_xnew = col
-                        elif col_name == "Y_NEW":
-                            col_ynew = col
-                        elif col_name == "Z_NEW":
-                            col_znew = col
-                if not all([col_xnew, col_ynew, col_znew]):
-                    print(f"[ERROR] Alguna de las columnas X_NEW, Y_NEW o Z_NEW no existe en la hoja {sheet_name}. No se escribe nada.")
+                    if cell_val and str(cell_val).strip().upper() == "X_NEW":
+                        col_xnew = col
+                        break
+                if not col_xnew:
+                    print(f"[ERROR] La columna X_NEW no existe en la hoja {sheet_name}. No se escribe nada.")
                 else:
                     fila_punto = nr_to_row.get(str(punto_nr))
                     if not fila_punto:
                         print(f"[WARN] No se encontró la fila para el punto {punto_nr}, no se escribe nada.")
                     else:
-                        # Guardar como número (float), usando coma o punto según formato
-                        try:
-                            x_num = float(X.replace(",", ".")) if isinstance(X, str) else float(X)
-                            y_num = float(Y.replace(",", ".")) if isinstance(Y, str) else float(Y)
-                            z_num = float(Z.replace(",", ".")) if isinstance(Z, str) else float(Z)
-                            ws_write.cell(row=fila_punto, column=col_xnew).value = x_num
-                            ws_write.cell(row=fila_punto, column=col_ynew).value = y_num
-                            ws_write.cell(row=fila_punto, column=col_znew).value = z_num
-                            print(f"[DEBUG] Escrito X={x_num}, Y={y_num}, Z={z_num} (numeros) en X_NEW, Y_NEW, Z_NEW para el punto {punto_nr} (fila {fila_punto})")
-                        except Exception as conv_e:
-                            ws_write.cell(row=fila_punto, column=col_xnew).value = X
-                            ws_write.cell(row=fila_punto, column=col_ynew).value = Y
-                            ws_write.cell(row=fila_punto, column=col_znew).value = Z
-                            print(f"[WARN] No se pudo convertir alguna coordenada a número, guardadas como texto.")
+                        ws_write.cell(row=fila_punto, column=col_xnew).value = 8
+                        print(f"[DEBUG] Escrito un 8 en X_NEW para el punto {punto_nr} (fila {fila_punto}, columna {col_xnew})")
                         wb_write.save(target_excel)
                 wb_write.close()
             except Exception as e:
