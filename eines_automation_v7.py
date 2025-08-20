@@ -807,7 +807,7 @@ def main():
                     text_upper = text.upper()
                     if "INTERSECT POSITION" in text_upper:
                         intersect_text = text
-                        # Añadir espacio tras los dos puntos si falta (para que el primer número se detecte)
+                        # Añadir espacio tras los dos puntos si falta (para que el primer numero se detecte)
                         intersect_text = re.sub(r':([-\d])', r': \1', intersect_text)
                         print(f"[DEBUG] Row {idx}: ENCONTRADO 'Intersect position' (PASADA 1)")
                         print(f"[DEBUG] Row {idx}: Texto completo: '{intersect_text}'")
@@ -1101,14 +1101,15 @@ def main():
                     print(" ".join(row_print))
 
             
-            # ESCRITURA DE COORDENADAS X, Y, Z EN EXCEL COMO NÚMERO (dentro del bucle)
+            # ESCRITURA DE COORDENADAS X, Y, Z EN EXCEL COMO numero (dentro del bucle)
             try:
                 wb_write = openpyxl.load_workbook(target_excel)
                 ws_write = wb_write[sheet_name]
                 header_row = hdr + 1  # hdr viene de load_excel_any_header, openpyxl es 1-based
 
-                # Buscar las columnas X_NEW, Y_NEW, Z_NEW (no crear si no existen)
+                # Buscar las columnas X_NEW, Y_NEW, Z_NEW, X_PAG, X_EINES, Y_PAG, Y_EINES, Z_PAG, Z_EINES
                 col_xnew = col_ynew = col_znew = None
+                col_xpag = col_xeines = col_ypag = col_yeines = col_zpag = col_zeines = None
                 for col in range(1, ws_write.max_column + 1):
                     cell_val = ws_write.cell(row=header_row, column=col).value
                     if cell_val:
@@ -1119,6 +1120,19 @@ def main():
                             col_ynew = col
                         elif col_name == "Z_NEW":
                             col_znew = col
+                        elif col_name == "X_PAG":
+                            col_xpag = col
+                        elif col_name == "X_EINES":
+                            col_xeines = col
+                        elif col_name == "Y_PAG":
+                            col_ypag = col
+                        elif col_name == "Y_EINES":
+                            col_yeines = col
+                        elif col_name == "Z_PAG":
+                            col_zpag = col
+                        elif col_name == "Z_EINES":
+                            col_zeines = col
+
                 if not all([col_xnew, col_ynew, col_znew]):
                     print(f"[ERROR] Alguna de las columnas X_NEW, Y_NEW o Z_NEW no existe en la hoja {sheet_name}. No se escribe nada.")
                 else:
@@ -1126,7 +1140,7 @@ def main():
                     if not fila_punto:
                         print(f"[WARN] No se encontró la fila para el punto {punto_nr}, no se escribe nada.")
                     else:
-                        # Guardar como número (float), usando coma o punto según formato
+                        # Guardar como numero (float), usando coma o punto según formato
                         try:
                             x_num = float(X.replace(",", ".")) if isinstance(X, str) else float(X)
                             y_num = float(Y.replace(",", ".")) if isinstance(Y, str) else float(Y)
@@ -1139,7 +1153,27 @@ def main():
                             ws_write.cell(row=fila_punto, column=col_xnew).value = X
                             ws_write.cell(row=fila_punto, column=col_ynew).value = Y
                             ws_write.cell(row=fila_punto, column=col_znew).value = Z
-                            print(f"[WARN] No se pudo convertir alguna coordenada a número, guardadas como texto.")
+                            print(f"[WARN] No se pudo convertir alguna coordenada a numero, guardadas como texto.")
+
+                        # Copiar valores de X_PAG, X_EINES, Y_PAG, Y_EINES, Z_PAG, Z_EINES como valores (no formulas)
+                        def copy_value_as_number(row, col):
+                            if col:
+                                val = ws_write.cell(row=row, column=col).value
+                                try:
+                                    val_num = float(str(val).replace(",", ".")) if val is not None else None
+                                    ws_write.cell(row=row, column=col).value = val_num
+                                except Exception:
+                                    ws_write.cell(row=row, column=col).value = val
+
+                        copy_value_as_number(fila_punto, col_xpag)
+                        copy_value_as_number(fila_punto, col_xeines)
+                        copy_value_as_number(fila_punto, col_ypag)
+                        copy_value_as_number(fila_punto, col_yeines)
+                        copy_value_as_number(fila_punto, col_zpag)
+                        copy_value_as_number(fila_punto, col_zeines)
+
+                        print(f"[DEBUG] Copiados los valores de X_PAG, X_EINES, Y_PAG, Y_EINES, Z_PAG, Z_EINES como valores para el punto {punto_nr} (fila {fila_punto})")
+
                         wb_write.save(target_excel)
                 wb_write.close()
             except Exception as e:
@@ -1148,6 +1182,40 @@ def main():
         except Exception as e:
             print(f"[ERR] Row {idx}: {e}")
 
+    print("\n" + "="*80)
+    print(f"   SE HA GENERADO UN ARCHIVO EXCEL CON LOS RESULTADOS: {excel_copy}")
+    print("\n" + "="*80)
+
+    
 
 if __name__ == "__main__":
+    # --- BLOQUE DE PROTECCION: SOLO CONTINUAR SI EXCEL ESTA ABIERTO ---
+    cfg = json.load(open("config_v6_5e.json", "r", encoding="utf-8"))  # O usa tu método para obtener el path
+    excel_path = cfg["excel_path"]
+    excel_name = os.path.basename(excel_path).lower()
+
+    excel_running = False
+    for proc in psutil.process_iter(['name', 'cmdline']):
+        try:
+            if proc.info['name'] and 'excel' in proc.info['name'].lower():
+                # Si quieres comprobar que el archivo concreto esta abierto:
+                if any(excel_name in str(arg).lower() for arg in proc.info.get('cmdline', [])):
+                    excel_running = True
+                    break
+                # O simplemente si Excel esta abierto:
+                excel_running = True
+                break
+        except Exception:
+            continue
+
+    if not excel_running:
+        print("\n" + "="*80)
+        print("   ATENCION: DEBES ABRIR EL ARCHIVO EXCEL '{}' ANTES DE EJECUTAR ESTE SCRIPT".format(excel_name.upper()))
+        print("   NO SE PUEDE CONTINUAR. ABRE EL EXCEL Y VUELVE A EJECUTAR EL PROGRAMA.")
+        print("="*80 + "\n")
+        sys.exit(1)
+    # --- FIN BLOQUE DE PROTECCION ---
+
     main()
+
+    
