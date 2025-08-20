@@ -1044,8 +1044,8 @@ def main():
                     print(" ".join(row_print))
 
                 # ESCRITURA DEBUG EN EXCEL (dentro del bucle)
-                try:
-                    if punto_nr == "1":
+                if punto_nr == "1":
+                    try:
                         print("[DEBUG] Intentando escribir un 8 en la celda E3 del Excel...")
                         excel_path = cfg["excel_path"]
                         wb = openpyxl.load_workbook(excel_path)
@@ -1055,8 +1055,8 @@ def main():
                         wb.save(excel_path)
                         wb.close()
                         print("[DEBUG] Escrito correctamente el 8 en E3 y guardado el Excel.")
-                except Exception as e:
-                    print(f"[ERROR] No se pudo escribir en el Excel: {e}")
+                    except Exception as e:
+                        print(f"[ERROR] No se pudo escribir en el Excel: {e}")
 
     except Exception as e:
         print(f"[ERR] Row {idx}: {e}")
