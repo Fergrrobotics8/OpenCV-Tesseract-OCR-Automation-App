@@ -1,0 +1,627 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<stations>
+    <station id="1">
+     <name>RIGHTSIDE1</name>
+     <cameras>
+      <camera id="1">
+        <target>1</target>
+		<subset>1</subset>
+      </camera>
+      <camera id="2">
+        <target>2</target>
+		<subset>1</subset>
+      </camera>
+      <camera id="6">
+        <target>6</target>
+		<subset>1</subset>
+      </camera>
+      <camera id="7">
+        <target>7</target>
+		<subset>1</subset>
+      </camera>
+	 </cameras>
+	 <boxes>
+	  <box id="10">
+        <left>110</left>
+        <right>4150</right>
+        <top>0</top>
+        <bottom>960</bottom>
+        <near>0</near>
+        <far>1120</far>
+      </box>
+	  <box id="20">
+        <left>110</left>
+        <right>4150</right>
+        <top>0</top>
+        <bottom>960</bottom>
+        <near>0</near>
+        <far>1120</far>
+      </box>
+	  <box id="50">
+        <left>110</left>
+        <right>4150</right>
+        <top>0</top>
+        <bottom>960</bottom>
+        <near>0</near>
+        <far>1120</far>
+      </box>
+	  <box id="80">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+	  <box id="81">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+	  <box id="90">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+	  <box id="91">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+     </boxes>
+    </station>
+	<station id="2">
+     <name>RIGHTSIDE2</name>
+     <cameras>
+      <camera id="3">
+        <target>3</target>
+		<subset>2</subset>
+      </camera>
+      <camera id="4">
+        <target>4</target>
+		<subset>2</subset>
+      </camera>
+	  <camera id="5">
+        <target>5</target>
+		<subset>2</subset>
+      </camera>
+      <camera id="8">
+        <target>8</target>
+		<subset>2</subset>
+      </camera>
+	 </cameras>
+	 <boxes>
+	  <box id="10">
+        <left>110</left>
+        <right>4150</right>
+        <top>0</top>
+        <bottom>960</bottom>
+        <near>0</near>
+        <far>1120</far>
+      </box>
+	  <box id="20">
+        <left>110</left>
+        <right>4150</right>
+        <top>0</top>
+        <bottom>960</bottom>
+        <near>0</near>
+        <far>1120</far>
+      </box>
+	  <box id="50">
+        <left>110</left>
+        <right>4150</right>
+        <top>0</top>
+        <bottom>960</bottom>
+        <near>0</near>
+        <far>1120</far>
+      </box>
+	  <box id="80">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+	  <box id="81">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+	  <box id="90">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+	  <box id="91">
+        <left>250</left>
+        <right>4900</right>
+        <top>0</top>
+        <bottom>1000</bottom>
+        <near>0</near>
+        <far>1250</far>
+      </box>
+     </boxes>
+    </station>
+	<station id="3"> 
+	  <name>LEFTSIDE1</name>
+	  <cameras>
+	   <camera id="9">
+        <target>9</target>
+		<subset>3</subset>
+       </camera>
+       <camera id="10">
+        <target>10</target>
+		<subset>3</subset>
+       </camera>
+       <camera id="14">
+        <target>14</target>
+		<subset>3</subset>
+       </camera>
+       <camera id="15">
+        <target>15</target>
+		<subset>3</subset>
+       </camera>
+	  </cameras>
+	  <boxes>
+	   <box id="10">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1120</far>
+       </box>
+	   <box id="20">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1120</far>
+       </box>
+	   <box id="50">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1120</far>
+       </box>
+	   <box id="80">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+	   <box id="81">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+	   <box id="90">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+	   <box id="91">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+     </boxes>
+    </station>
+	<station id="4"> 
+	  <name>LEFTSIDE2</name>
+	  <cameras>
+       <camera id="11">
+        <target>11</target>
+		<subset>4</subset>
+       </camera>
+       <camera id="12">
+        <target>12</target>
+		<subset>4</subset>
+       </camera>
+	   <camera id="13">
+        <target>13</target>
+		<subset>4</subset>
+       </camera>
+       <camera id="16">
+        <target>16</target>
+		<subset>4</subset>
+       </camera>
+	  </cameras>
+	  <boxes>
+	   <box id="10">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1120</far>
+       </box>
+	   <box id="20">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1120</far>
+       </box>
+	   <box id="50">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1120</far>
+       </box>
+	   <box id="80">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+	   <box id="81">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+	   <box id="90">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+	   <box id="91">
+        <left>250</left>
+        <right>4900</right>
+        <top>-1000</top>
+        <bottom>0</bottom>
+        <near>0</near>
+        <far>1250</far>
+       </box>
+     </boxes>
+    </station>
+	<station id="5"> 
+	  <name>ROOF</name>
+	  <cameras>	
+	   <camera id="17">
+        <target>17</target>
+		<subset>5</subset>
+       </camera>
+       <camera id="18">
+        <target>18</target>
+		<subset>5</subset>
+       </camera>
+       <camera id="21">
+        <target>21</target>
+		<subset>5</subset>
+       </camera>
+       <camera id="22">
+        <target>22</target>
+		<subset>5</subset>
+       </camera>
+	  </cameras>
+	  <boxes>
+	   <box id="10">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>1120</far>
+       </box>
+	   <box id="20">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>1120</far>
+       </box>
+	   <box id="50">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>1120</far>
+       </box>
+	   <box id="80">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+	   <box id="81">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+	   <box id="90">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+	   <box id="91">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+      </boxes>
+    </station>
+	<station id="6"> 
+	  <name>ROOFHOOD</name>
+	  <cameras>	
+	   <camera id="19">
+        <target>19</target>
+		<subset>6</subset>
+       </camera>
+       <camera id="20">
+        <target>20</target>
+		<subset>6</subset>
+       </camera>
+	   <camera id="23">
+        <target>23</target>
+		<subset>6</subset>
+       </camera>
+	   <camera id="28">
+        <target>28</target>
+		<subset>6</subset>
+       </camera>
+	  </cameras>
+	  <boxes>
+	   <box id="10">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>1120</far>
+       </box>
+	   <box id="20">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>1120</far>
+       </box>
+	   <box id="50">
+        <left>110</left>
+        <right>4150</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>1120</far>
+       </box>
+	   <box id="80">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+	   <box id="81">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+	   <box id="90">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+	   <box id="91">
+        <left>250</left>
+        <right>4150</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>1250</far>
+       </box>
+      </boxes>
+    </station>
+	<station id="7"> 
+	  <name>HOOD</name>
+	  <cameras>	
+       <camera id="24">
+        <target>24</target>
+		<subset>7</subset>
+       </camera>	  
+	   <camera id="25">
+        <target>25</target>
+		<subset>7</subset>
+       </camera>
+       <camera id="26">
+        <target>26</target>
+		<subset>7</subset>
+       </camera>
+       <camera id="27">
+        <target>27</target>
+		<subset>7</subset>
+       </camera>
+      </cameras>
+	  <boxes>
+	   <box id="10">
+        <left>110</left>
+        <right>1700</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>780</far>
+       </box>
+	   <box id="20">
+        <left>110</left>
+        <right>1700</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>780</far>
+       </box>
+	   <box id="50">
+        <left>110</left>
+        <right>1700</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>780</far>
+       </box>
+	   <box id="80">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+	   <box id="81">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+	   <box id="90">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+	   <box id="91">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+      </boxes>
+    </station>
+	<station id="9"> 
+	  <name>BRIDGE</name>
+	  <cameras>	
+       <camera id="28">
+        <target>28</target>
+		<subset>9</subset>
+       </camera>	  
+	   <camera id="29">
+        <target>29</target>
+		<subset>9</subset>
+       </camera>
+      </cameras>
+	  <boxes>
+	   <box id="10">
+        <left>110</left>
+        <right>1700</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>780</far>
+       </box>
+	   <box id="20">
+        <left>110</left>
+        <right>1700</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>780</far>
+       </box>
+	   <box id="50">
+        <left>110</left>
+        <right>1700</right>
+        <top>-960</top>
+        <bottom>960</bottom>
+        <near>420</near>
+        <far>780</far>
+       </box>
+	   <box id="80">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+	   <box id="81">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+	   <box id="90">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+	   <box id="91">
+        <left>250</left>
+        <right>1950</right>
+        <top>-1000</top>
+        <bottom>1000</bottom>
+        <near>450</near>
+        <far>820</far>
+       </box>
+      </boxes>
+    </station>
+</stations>

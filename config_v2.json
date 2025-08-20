@@ -1,0 +1,11 @@
+{
+  "excel_path": "C:/Users/fernando.garcia/Documents/COSAS FERNANDO/DEVELOPER/Script Blender puntos PORSCHE/POSITION.xlsx",
+  "stations_xml_path": "C:/Users/fernando.garcia/Documents/COSAS FERNANDO/DEVELOPER/Script Blender puntos PORSCHE/stations.xml",
+  "viewer_exe_path": "C:/Eines/System3d/Program/eines.system3d.dentcheck.exe",
+  "window_title_contains": "eines.System3D.Dentcheck.exe",
+  "attach_only": false,
+  "work_dir": "C:/Eines/System3d/Program/",
+  "post_show_delay_s": 0.7,
+  "per_row_pause_s": 0.2,
+  "output_excel_path": "C:/Users/fernando.garcia/Documents/COSAS FERNANDO/DEVELOPER/Script Blender puntos PORSCHE/POSITION.xlsx"
+}

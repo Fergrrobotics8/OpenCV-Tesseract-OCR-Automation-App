@@ -1,0 +1,15 @@
+{
+  "excel_path": "C:/Users/fernando.garcia/Documents/COSAS FERNANDO/DEVELOPER/Script Blender puntos PORSCHE/POSITION.xlsx",
+  "excel_sheet": "Hoja1",
+  "stations_xml_path": "C:/Users/fernando.garcia/Documents/COSAS FERNANDO/DEVELOPER/Script Blender puntos PORSCHE/stations.xml",
+  "viewer_exe_path": "C:/Eines/System3d/Program/eines.system3d.dentcheck.exe",
+  "window_title_contains": "EINES System 3D for ESPQi",
+  "attach_only": false,
+  "work_dir": "C:/Eines/System3d/Program/",
+  "mesh_name": "TAYCAN_NACHFOLGER",
+  "tesseract_cmd": "C:/Program Files/Tesseract-OCR/tesseract.exe",
+  "extra_load_wait_s": 3.0,
+  "post_show_delay_s": 0.7,
+  "per_row_pause_s": 0.2,
+  "output_excel_path": "C:/Users/fernando.garcia/Documents/COSAS FERNANDO/DEVELOPER/Script Blender puntos PORSCHE/POSITION.xlsx"
+}
