@@ -269,6 +269,7 @@ def attach_or_launch(exe_path, title_hint, work_dir=None, attach_only=False, ext
         if title_hint.lower() in w.window_text().lower():
             w.set_focus()
             w.maximize()
+            time.sleep(1.5)
             rect = w.rectangle()
             global WIN_RECT
             WIN_RECT = (rect.left, rect.top, rect.right, rect.bottom)
@@ -886,106 +887,187 @@ def main():
                                 else:
                                     print(f"[DEBUG] Row {idx}: Solo {len(coords_found)} coordenadas en Intersect, necesito 3")
                                 break
-                
-                # PASADA 4: ROI ESPECÍFICA si aún no encontró nada
-                if not found_intersect:
-                    print(f"[DEBUG] Row {idx}: === PASADA 3 FALLÓ - INICIANDO PASADA 4 (ROI específica) ===")
-                    roi_x1, roi_y1, roi_x2, roi_y2 = 1210, 110, 2120, 50
-                    img_h, img_w = zoomed_footer.shape[:2]
-                    roi_x1 = max(0, min(roi_x1, img_w))
-                    roi_y1 = max(0, min(roi_y1, img_h))
-                    roi_x2 = max(0, min(roi_x2, img_w))
-                    roi_y2 = max(0, min(roi_y2, img_h))
-                    if roi_y1 > roi_y2:
-                        roi_y1, roi_y2 = roi_y2, roi_y1
-                    if roi_x1 > roi_x2:
-                        roi_x1, roi_x2 = roi_x2, roi_x1
-                    print(f"[DEBUG] Row {idx}: ROI ajustada: ({roi_x1}, {roi_y1}) a ({roi_x2}, {roi_y2})")
-                    print(f"[DEBUG] Row {idx}: Imagen zoomed footer size: {img_w}x{img_h}")
-                    roi_img = zoomed_footer[roi_y1:roi_y2, roi_x1:roi_x2]
-                    cv2.imwrite(f"debug_intersect_roi_raw_row{idx}.png", roi_img)
+                # --- DEFINICION DE ROI ORIGINAL PARA PASADA 4 ---
+                roi_x1_orig, roi_y1_orig, roi_x2_orig, roi_y2_orig = 1210, 110, 2120, 50
+                roi_width = roi_x2_orig - roi_x1_orig
+                roi_height = roi_y2_orig - roi_y1_orig
 
-                    if roi_img.size > 0:
-                        print(f"[DEBUG] Row {idx}: ROI extraída size: {roi_img.shape}")
-                        roi_zoom = 1.5
-                        roi_zoomed = cv2.resize(roi_img, None, fx=roi_zoom, fy=roi_zoom, interpolation=cv2.INTER_CUBIC)
-                        cv2.imwrite(f"debug_intersect_roi_zoomed_row{idx}.png", roi_zoomed)
-                        roi_configs = [
-                            ("psm6", 6),
-                            ("psm7", 7),
-                            ("psm8", 8),
-                            ("psm11", 11)
-                        ]
-                        roi_debug_results = cv2.cvtColor(roi_zoomed, cv2.COLOR_GRAY2BGR)
-                        best_coords = None
-                        best_score = -1
-                        best_text = ""
-                        for config_name, psm_val in roi_configs:
+                # PASADA 4: ROI DINAMICA basada en la caja OCR de "Intersect position"
+                if not found_intersect:
+                    print(f"[DEBUG] Row {idx}: === PASADA 3 FALLO - INICIANDO PASADA 4 (ROI dinamica por OCR) ===")
+                    roi_found = False
+                    roi_x1 = roi_y1 = roi_x2 = roi_y2 = None
+                    intersect_box = None
+
+                    if data_footer:
+                        for i in range(len(data_footer["text"])):
+                            txt = (data_footer["text"][i] or "").strip()
+                            if "INTERSECT" in txt.upper():
+                                x = int(data_footer["left"][i])
+                                y = int(data_footer["top"][i])
+                                w = int(data_footer["width"][i])
+                                h = int(data_footer["height"][i])
+                                # Calcula el desplazamiento entre la ROI original y la caja OCR
+                                delta_x = roi_x1_orig - x
+                                delta_y = roi_y1_orig - y
+                                roi_x1 = x + delta_x
+                                roi_y1 = y + delta_y
+                                roi_x2 = roi_x1 + roi_width
+                                roi_y2 = roi_y1 + roi_height
+                                roi_found = True
+                                intersect_box = (x, y, w, h)
+                                print(f"[DEBUG] Row {idx}: OCR INTERSECT box: ({x}, {y}, {w}, {h})")
+                                print(f"[DEBUG] Row {idx}: ROI dinamica calculada: ({roi_x1}, {roi_y1}) a ({roi_x2}, {roi_y2})")
+                                print(f"[DEBUG] Row {idx}: ROI original: ({roi_x1_orig}, {roi_y1_orig}) a ({roi_x2_orig}, {roi_y2_orig})")
+                                break
+
+                    img_h, img_w = zoomed_footer.shape[:2]
+                    if roi_found:
+                        # Ajusta limites para no salirte de la imagen
+                        roi_x1 = max(0, min(int(roi_x1), img_w))
+                        roi_y1 = max(0, min(int(roi_y1), img_h))
+                        roi_x2 = max(0, min(int(roi_x2), img_w))
+                        roi_y2 = max(0, min(int(roi_y2), img_h))
+                        if roi_y2 < roi_y1:
+                            roi_y1, roi_y2 = roi_y2, roi_y1
+                        if roi_x2 < roi_x1:
+                            roi_x1, roi_x2 = roi_x2, roi_x1
+                        print(f"[DEBUG] Row {idx}: ROI ajustada: ({roi_x1}, {roi_y1}) a ({roi_x2}, {roi_y2})")
+                        roi_img = zoomed_footer[roi_y1:roi_y2, roi_x1:roi_x2]
+
+                        # PASADAS MULTIPLES: OCR sobre ROI dinamica con diferentes PSM y seleccion de la mejor
+                        mejores_coords = None
+                        mejor_psm = None
+                        mejor_longitud = -1
+                        for psm in [6, 7, 8, 11]:
                             try:
-                                data_roi = ocr_data(roi_zoomed, psm=psm_val, lang="eng+spa", timeout=2.0)
+                                data_roi = ocr_data(roi_img, psm=psm, lang="eng+spa", timeout=2.0)
                                 if data_roi:
-                                    roi_text_parts = []
-                                    for i in range(len(data_roi["text"])):
-                                        txt = (data_roi["text"][i] or "").strip()
-                                        try: conf = float(data_roi["conf"][i])
-                                        except: conf = 0.0
-                                        if txt and conf >= 30:
-                                            roi_text_parts.append(txt)
-                                            x = int(data_roi["left"][i])
-                                            y = int(data_roi["top"][i])
-                                            w = int(data_roi["width"][i])
-                                            h = int(data_roi["height"][i])
-                                            if re.match(r'-?\d{1,4},\d{1,3}$', txt):
-                                                color = (0, 255, 0)
-                                                font_scale = 1.2
-                                                thickness = 2
-                                                cv2.rectangle(roi_debug_results, (x, y), (x+w, y+h), color, 2)
-                                                cv2.putText(roi_debug_results, txt, (x, y+h+30), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness, cv2.LINE_AA)
-                                            else:
-                                                color = (255, 0, 0)
-                                                font_scale = 0.6
-                                                thickness = 1
-                                                cv2.rectangle(roi_debug_results, (x, y), (x+w, y+h), color, 1)
-                                                cv2.putText(roi_debug_results, txt, (x, y-5), cv2.FONT_HERSHEY_SIMPLEX, font_scale, color, thickness, cv2.LINE_AA)
-                                    roi_full_text = " ".join(roi_text_parts)
-                                    print(f"[DEBUG] Row {idx}: ROI {config_name} texto: '{roi_full_text}'")
-                                    match = re.search(r'INTERSECT POSITION:?\s*([-\d,\. ]+)', roi_full_text.upper())
-                                    coords_found = []
+                                    roi_text = " ".join([(t or "").strip() for t in data_roi["text"] if t])
+                                    print(f"[DEBUG] Row {idx}: ROI psm{psm} texto: '{roi_text}'")
+                                    # Solo extrae coordenadas tras "Intersect position:" y antes de cualquier parentesis
+                                    match = re.search(r'INTERSECT POSITION:([^\(]+)', roi_text.upper())
                                     if match:
-                                        coord_text = match.group(1).split('(')[0].strip()
-                                        coordinate_pattern = r'-?\d{1,4},\d{1,3}'
-                                        coords_found = re.findall(coordinate_pattern, coord_text)
+                                        coords_str = match.group(1)
+                                        coord_pattern = r'-?\d{1,4},\d{1,3}'
+                                        coords_found = re.findall(coord_pattern, coords_str)
                                         print(f"[DEBUG] Row {idx}: Coordenadas tras Intersect position: {coords_found}")
-                                        # MAGIA: reconstrucción si la Z está partida
-                                        if len(coords_found) > 3:
-                                            last = coords_found[-2:]
-                                            if all(re.match(r'^\d{1,3}$', x.replace(',', '')) for x in last):
-                                                coords_found[-2] = coords_found[-2] + coords_found[-1]
-                                                coords_found = coords_found[:-1]
-                                            elif re.match(r'^\d{1,3}$', coords_found[-2].replace(',', '')) and re.match(r'^,\d{1,3}$', coords_found[-1]):
-                                                coords_found[-2] = coords_found[-2] + coords_found[-1]
-                                                coords_found = coords_found[:-1]
-                                        # Solo si hay 3 coordenadas
                                         if len(coords_found) == 3:
-                                            score = sum(len(c) for c in coords_found)
-                                            if score > best_score:
-                                                best_score = score
-                                                best_coords = coords_found
-                                                best_text = roi_full_text
+                                            suma_longitudes = sum(len(c) for c in coords_found)
+                                            if suma_longitudes > mejor_longitud:
+                                                mejores_coords = coords_found
+                                                mejor_psm = psm
+                                                mejor_longitud = suma_longitudes
+                                                print(f"[DEBUG] Row {idx}: Mejor combinacion momentanea (psm{psm}): {coords_found} (longitud total: {suma_longitudes})")
+                                        else:
+                                            print(f"[DEBUG] Row {idx}: Solo {len(coords_found)} coordenadas tras Intersect position, necesito 3")
                             except Exception as e:
-                                print(f"[DEBUG] Row {idx}: Error en ROI OCR {config_name}: {e}")
-                                continue
-                        cv2.imwrite(f"debug_intersect_roi_detections_row{idx}.png", roi_debug_results)
-                        if best_coords:
-                            X, Y, Z = best_coords[0], best_coords[1], best_coords[2]
+                                print(f"[WARN] Row {idx}: OCR fallo en ROI PSM={psm}: {e}")
+
+                        if mejores_coords:
+                            X, Y, Z = mejores_coords
                             xyz = [X, Y, Z]
                             found_intersect = True
-                            print(f"[DEBUG] Row {idx}: COORDENADAS FINALES (PASADA 4)! X={X}, Y={Y}, Z={Z} (texto: '{best_text}')")
+                            print(f"[DEBUG] Row {idx}: COORDENADAS EXTRAIDAS (PASADA 4 - psm{mejor_psm})! X={X}, Y={Y}, Z={Z}")
                         else:
-                            print(f"[DEBUG] Row {idx}: ROI no produjo resultados válidos para Intersect position.")
+                            print(f"[DEBUG] Row {idx}: No se encontraron 3 coordenadas validas en ninguna pasada de la ROI dinamica.")
+
+                        # Imagen de debug: dibuja la caja OCR y la ROI
+                        dbg_roi = cv2.cvtColor(zoomed_footer, cv2.COLOR_GRAY2BGR)
+                        if intersect_box:
+                            x, y, w, h = intersect_box
+                            cv2.rectangle(dbg_roi, (x, y), (x+w, y+h), (255, 0, 0), 2)  # Azul: caja OCR
+                            cv2.putText(dbg_roi, "INTERSECT OCR", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,0,0), 2, cv2.LINE_AA)
+                        cv2.rectangle(dbg_roi, (roi_x1, roi_y1), (roi_x2, roi_y2), (0, 255, 0), 2)  # Verde: ROI calculada
+                        cv2.putText(dbg_roi, "ROI DINAMICA", (roi_x1, roi_y1-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,255,0), 2, cv2.LINE_AA)
+                        cv2.rectangle(dbg_roi, (roi_x1_orig, roi_y1_orig), (roi_x2_orig, roi_y2_orig), (0, 0, 255), 2)  # Rojo: ROI original
+                        cv2.putText(dbg_roi, "ROI ORIGINAL", (roi_x1_orig, roi_y1_orig-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2, cv2.LINE_AA)
+                        cv2.imwrite(f"debug_intersect_roi_debug_row{idx}.png", dbg_roi)
                     else:
-                        print(f"[DEBUG] Row {idx}: ROI vacía o fuera de límites")
-        
+                        # Fallback: usa la ROI fija antigua
+                        roi_x1, roi_y1, roi_x2, roi_y2 = roi_x1_orig, roi_y1_orig, roi_x2_orig, roi_y2_orig
+                        roi_x1 = max(0, min(roi_x1, img_w))
+                        roi_y1 = max(0, min(roi_y1, img_h))
+                        roi_x2 = max(0, min(roi_x2, img_w))
+                        roi_y2 = max(0, min(roi_y2, img_h))
+                        if roi_y2 < roi_y1:
+                            roi_y1, roi_y2 = roi_y2, roi_y1
+                        if roi_x2 < roi_x1:
+                            roi_x1, roi_x2 = roi_x2, roi_x1
+                        print(f"[DEBUG] Row {idx}: ROI fallback: ({roi_x1}, {roi_y1}) a ({roi_x2}, {roi_y2})")
+                        roi_img = zoomed_footer[roi_y1:roi_y2, roi_x1:roi_x2]
+
+                        # Imagen de debug solo con ROI original
+                        dbg_roi = cv2.cvtColor(zoomed_footer, cv2.COLOR_GRAY2BGR)
+                        cv2.rectangle(dbg_roi, (roi_x1_orig, roi_y1_orig), (roi_x2_orig, roi_y2_orig), (0, 0, 255), 2)
+                        cv2.putText(dbg_roi, "ROI ORIGINAL", (roi_x1_orig, roi_y1_orig-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0,0,255), 2, cv2.LINE_AA)
+                        cv2.imwrite(f"debug_intersect_roi_debug_row{idx}.png", dbg_roi)
+
+                # PASADA 5: OCR sobre ROI con varios métodos de preprocesado (zoom, otsu, otsu invertido, adaptativo)
+                if not found_intersect and roi_found and 'roi_img' in locals():
+                    print(f"[DEBUG] Row {idx}: === PASADA 5 - OCR sobre ROI con métodos de preprocesado ===")
+                    mejores_coords_5 = None
+                    mejor_longitud_5 = -1
+                    mejor_metodo_5 = None
+                
+                    zoom = 2.5
+                    roi_gray = roi_img if len(roi_img.shape) == 2 else cv2.cvtColor(roi_img, cv2.COLOR_BGR2GRAY)
+                    transforms = []
+                
+                    # 1. Zoom agresivo
+                    zoomed = cv2.resize(roi_gray, None, fx=zoom, fy=zoom, interpolation=cv2.INTER_CUBIC)
+                    transforms.append(("zoom", zoomed))
+                
+                    # 2. Otsu threshold con zoom
+                    _, otsu = cv2.threshold(roi_gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                    otsu_zoom = cv2.resize(otsu, None, fx=zoom, fy=zoom, interpolation=cv2.INTER_CUBIC)
+                    transforms.append(("otsu_zoom", otsu_zoom))
+                
+                    # 3. Otsu invertido con zoom
+                    otsu_inv_zoom = cv2.resize(255 - otsu, None, fx=zoom, fy=zoom, interpolation=cv2.INTER_CUBIC)
+                    transforms.append(("otsu_inv_zoom", otsu_inv_zoom))
+                
+                    # 4. Threshold adaptativo con zoom
+                    adaptive = cv2.adaptiveThreshold(roi_gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+                    adaptive_zoom = cv2.resize(adaptive, None, fx=zoom, fy=zoom, interpolation=cv2.INTER_CUBIC)
+                    transforms.append(("adaptive_zoom", adaptive_zoom))
+                
+                    for metodo, img_proc in transforms:
+                        try:
+                            data_roi = ocr_data(img_proc, psm=6, lang="eng+spa", timeout=2.0)
+                            if data_roi:
+                                roi_text = " ".join([(t or "").strip() for t in data_roi["text"] if t])
+                                print(f"[DEBUG] Row {idx}: ROI PASADA 5 metodo={metodo}: '{roi_text}'")
+                                match = re.search(r'INTERSECT POSITION:([^\(]+)', roi_text.upper())
+                                if match:
+                                    coords_str = match.group(1)
+                                    coord_pattern = r'-?\d{1,4},\d{1,3}'
+                                    coords_found = re.findall(coord_pattern, coords_str)
+                                    print(f"[DEBUG] Row {idx}: Coordenadas tras Intersect position (PASADA 5, {metodo}): {coords_found}")
+                                    if len(coords_found) == 3:
+                                        suma_longitudes = sum(len(c) for c in coords_found)
+                                        if suma_longitudes > mejor_longitud_5:
+                                            mejores_coords_5 = coords_found
+                                            mejor_longitud_5 = suma_longitudes
+                                            mejor_metodo_5 = metodo
+                                            print(f"[DEBUG] Row {idx}: Mejor combinacion momentanea (PASADA 5, {metodo}): {coords_found} (longitud total: {suma_longitudes})")
+                                else:
+                                    print(f"[DEBUG] Row {idx}: No se encontro 'Intersect position:' en PASADA 5, metodo {metodo}")
+                        except Exception as e:
+                            print(f"[WARN] Row {idx}: OCR fallo en PASADA 5, metodo {metodo}: {e}")
+                
+                    if mejores_coords_5:
+                        X, Y, Z = mejores_coords_5
+                        xyz = [X, Y, Z]
+                        found_intersect = True
+                        print(f"[DEBUG] Row {idx}: COORDENADAS EXTRAIDAS (PASADA 5 - {mejor_metodo_5})! X={X}, Y={Y}, Z={Z}")
+                    else:
+                        print(f"[DEBUG] Row {idx}: No se encontraron 3 coordenadas validas en ninguna transformacion de PASADA 5.")
+
+                if 'roi_img' in locals():
+                    cv2.imwrite(f"debug_intersect_roi_raw_row{idx}.png", roi_img)
+                # ...el resto de tu código de OCR sobre roi_img sigue igual...
+
                 # === GENERACIÓN DE IMÁGENES DEBUG PARA INTERSECT ===
                 dbg_intersect = cv2.cvtColor(zoomed_footer, cv2.COLOR_GRAY2BGR)
                 
@@ -1177,6 +1259,7 @@ def main():
                         wb_write.save(target_excel)
                 wb_write.close()
             except Exception as e:
+               
                 print(f"[ERROR] No se pudo escribir en el Excel: {e}")
 
         except Exception as e:
@@ -1189,8 +1272,8 @@ def main():
     
 
 if __name__ == "__main__":
-    # --- BLOQUE DE PROTECCION: SOLO CONTINUAR SI EXCEL ESTA ABIERTO ---
-    cfg = json.load(open("config_v6_5e.json", "r", encoding="utf-8"))  # O usa tu método para obtener el path
+    # --- BLOQUE DE PROTECCION: SOLO CONTINUAR SI EL EXCEL CORRECTO ESTA ABIERTO ---
+    cfg = json.load(open("config_v6_5e.json", "r", encoding="utf-8"))
     excel_path = cfg["excel_path"]
     excel_name = os.path.basename(excel_path).lower()
 
@@ -1198,24 +1281,25 @@ if __name__ == "__main__":
     for proc in psutil.process_iter(['name', 'cmdline']):
         try:
             if proc.info['name'] and 'excel' in proc.info['name'].lower():
-                # Si quieres comprobar que el archivo concreto esta abierto:
-                if any(excel_name in str(arg).lower() for arg in proc.info.get('cmdline', [])):
-                    excel_running = True
+                # Busca SOLO si el archivo correcto esta abierto
+                if proc.info.get('cmdline'):
+                    for arg in proc.info['cmdline']:
+                        if isinstance(arg, str) and excel_name in arg.lower():
+                            excel_running = True
+                            break
+                if excel_running:
                     break
-                # O simplemente si Excel esta abierto:
-                excel_running = True
-                break
         except Exception:
             continue
 
     if not excel_running:
         print("\n" + "="*80)
         print("   ATENCION: DEBES ABRIR EL ARCHIVO EXCEL '{}' ANTES DE EJECUTAR ESTE SCRIPT".format(excel_name.upper()))
-        print("   NO SE PUEDE CONTINUAR. ABRE EL EXCEL Y VUELVE A EJECUTAR EL PROGRAMA.")
+        print("   NO SE PUEDE CONTINUAR. ABRE SOLO EL EXCEL CORRECTO Y VUELVE A EJECUTAR EL PROGRAMA.")
         print("="*80 + "\n")
         sys.exit(1)
     # --- FIN BLOQUE DE PROTECCION ---
 
     main()
 
-    
+
